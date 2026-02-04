@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Square, Plus, ChevronRight, Trash2, Clock } from 'lucide-react';
+import { Play, Square, Plus, ChevronRight, Trash2, Clock, Users } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import type { WorkoutData, WorkoutSession, Exercise, Set } from '../types';
@@ -114,6 +114,36 @@ export function Workout({
             <div className="space-y-2">
               {pastSessions.slice(0, 20).map(session => {
                 const sessionDateStr = session.startTime.split('T')[0];
+                
+                // Dwarf workout - show simplified view
+                if (session.isDwarfWorkout) {
+                  return (
+                    <Card key={session.id}>
+                      <CardContent className="py-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Users size={16} className="text-purple-500" />
+                              <p className="font-medium">Dwarf Workout</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                              <Clock size={14} />
+                              <span>{formatDuration(session.startTime, session.endTime!)}</span>
+                              <span className="text-gray-300">•</span>
+                              <span>{formatDate(session.startTime)}</span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteWorkoutSession(session.id)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                }
                 
                 // Only include exercises that have sets logged on this session's date
                 const exercisesWithSets = session.exerciseIds

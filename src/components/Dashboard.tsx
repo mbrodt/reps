@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, Clock, Calendar, Flame, Download, Upload, Trash2 } from 'lucide-react';
+import { Activity, Clock, Calendar, Flame, Download, Upload, Trash2, Users } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
@@ -19,9 +19,10 @@ type DashboardProps = {
   data: WorkoutData;
   onImport: (data: WorkoutData) => void;
   onDeleteSessionsFromDate: (dateStr: string) => void;
+  onLogDwarfWorkout: () => void;
 };
 
-export function Dashboard({ data, onImport, onDeleteSessionsFromDate }: DashboardProps) {
+export function Dashboard({ data, onImport, onDeleteSessionsFromDate, onLogDwarfWorkout }: DashboardProps) {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCleanupModal, setShowCleanupModal] = useState(false);
   const [importText, setImportText] = useState('');
@@ -113,6 +114,15 @@ export function Dashboard({ data, onImport, onDeleteSessionsFromDate }: Dashboar
           </CardContent>
         </Card>
       )}
+
+      {/* Dwarf Workout */}
+      <Button
+        className="w-full mb-6"
+        onClick={onLogDwarfWorkout}
+      >
+        <Users size={18} />
+        Log Dwarf Workout
+      </Button>
 
       {/* Export/Import */}
       <div className="flex gap-3 mb-3">

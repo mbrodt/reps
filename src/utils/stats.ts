@@ -10,6 +10,13 @@ export function getUniqueWorkoutDates(data: WorkoutData): string[] {
     }
   }
   
+  // Get dates from Dwarf workouts (they don't have exercise sessions)
+  for (const session of data.workoutSessions) {
+    if (session.isDwarfWorkout && session.endTime) {
+      dates.add(session.startTime.split('T')[0]);
+    }
+  }
+  
   return Array.from(dates).sort();
 }
 

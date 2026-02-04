@@ -21,6 +21,7 @@ function App() {
     endWorkoutSession,
     deleteWorkoutSession,
     addExerciseToWorkoutSession,
+    logDwarfWorkout,
     replaceData,
     deleteSessionsFromDate,
   } = useWorkoutData();
@@ -65,6 +66,7 @@ function App() {
           data={data} 
           onImport={replaceData} 
           onDeleteSessionsFromDate={deleteSessionsFromDate}
+          onLogDwarfWorkout={logDwarfWorkout}
         />
       )}
       

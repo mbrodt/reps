@@ -164,6 +164,28 @@ export function useWorkoutData() {
     }));
   }, []);
 
+  const logDwarfWorkout = useCallback(() => {
+    const now = new Date();
+    const startTime = now.toISOString();
+    // Dwarf workouts are always 1 hour
+    const endTime = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+    
+    const newSession: WorkoutSession = {
+      id: generateId(),
+      startTime,
+      endTime,
+      exerciseIds: [],
+      isDwarfWorkout: true,
+    };
+    
+    setData(prev => ({
+      ...prev,
+      workoutSessions: [...prev.workoutSessions, newSession],
+    }));
+    
+    return newSession;
+  }, []);
+
   const replaceData = useCallback((newData: WorkoutData) => {
     setData(newData);
   }, []);
@@ -183,6 +205,7 @@ export function useWorkoutData() {
     endWorkoutSession,
     deleteWorkoutSession,
     addExerciseToWorkoutSession,
+    logDwarfWorkout,
     replaceData,
     deleteSessionsFromDate,
   };

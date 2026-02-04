@@ -21,6 +21,7 @@ export type WorkoutSession = {
   startTime: string;
   endTime?: string;
   exerciseIds: string[];
+  isDwarfWorkout?: boolean;
 };
 
 export type WorkoutData = {
