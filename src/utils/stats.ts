@@ -80,7 +80,7 @@ export function getCurrentStreak(data: WorkoutData): number {
   const today = new Date();
   
   // Check current week and go backwards
-  let checkDate = new Date(today);
+  const checkDate = new Date(today);
   
   for (let i = 0; i < 52; i++) { // Check up to a year of weeks
     const weekKey = getWeekKey(checkDate);
@@ -174,4 +174,54 @@ export function getExercisePreviousSession(exercise: Exercise) {
     .filter(s => s.date.split('T')[0] !== todayDateStr)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   return sorted[0] || null;
+}
+
+// Get the last N previous sessions (excluding today)
+export function getExercisePreviousSessions(exercise: Exercise, count: number) {
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  return exercise.sessions
+    .filter(s => s.date.split('T')[0] !== todayDateStr)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, count);
+}
+
+export function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// Compute the 1-based order of an exercise within its muscle group for a given date.
+// Uses WorkoutSession.exerciseIds for ordering when available, falls back to scanning
+// all exercises that have sets logged on that date.
+export function getMuscleGroupOrder(
+  exerciseId: string,
+  category: string,
+  sessionDate: string,
+  workoutSessions: WorkoutSession[],
+  allExercises: Exercise[],
+): number | null {
+  const datePart = sessionDate.split('T')[0];
+
+  // Try to use WorkoutSession.exerciseIds for ordering (most reliable)
+  const workoutSession = workoutSessions.find(
+    ws => ws.startTime.split('T')[0] === datePart && ws.exerciseIds.includes(exerciseId)
+  );
+  if (workoutSession) {
+    const sameCategory = workoutSession.exerciseIds.filter(id => {
+      const ex = allExercises.find(e => e.id === id);
+      return ex && ex.category === category;
+    });
+    const index = sameCategory.indexOf(exerciseId);
+    if (index >= 0) return index + 1;
+  }
+
+  // Fallback: find all exercises logged on this date in the same category
+  const sameCategoryExercises = allExercises.filter(ex =>
+    ex.category === category &&
+    ex.sessions.some(s => s.date.split('T')[0] === datePart && s.sets.length > 0)
+  );
+  const index = sameCategoryExercises.findIndex(ex => ex.id === exerciseId);
+  if (index < 0) return null;
+  return index + 1;
 }

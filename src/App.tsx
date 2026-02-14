@@ -11,12 +11,16 @@ import { Workout } from './components/Workout';
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [returnToExerciseId, setReturnToExerciseId] = useState<string | null>(null);
   
   const {
     data,
     addExercise,
     deleteExercise,
     addSetToExercise,
+    deleteSet,
+    updateSet,
+    updateExerciseSessionNote,
     startWorkoutSession,
     endWorkoutSession,
     deleteWorkoutSession,
@@ -28,12 +32,19 @@ function App() {
 
   const hasActiveWorkout = !!getActiveWorkoutSession(data);
 
+  const handleViewExerciseFromWorkout = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setActiveTab('exercises');
+    setReturnToExerciseId(exercise.id);
+  };
+
   // If viewing exercise detail
   if (selectedExercise && activeTab === 'exercises') {
     // Get fresh exercise data
     const exercise = data.exercises.find(e => e.id === selectedExercise.id);
     if (!exercise) {
       setSelectedExercise(null);
+      setReturnToExerciseId(null);
       return null;
     }
     
@@ -41,10 +52,18 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         <ExerciseDetail
           exercise={exercise}
-          onBack={() => setSelectedExercise(null)}
+          workoutSessions={data.workoutSessions}
+          allExercises={data.exercises}
+          onBack={() => {
+            setSelectedExercise(null);
+            if (returnToExerciseId) {
+              setActiveTab('workout');
+            }
+          }}
           onDelete={() => {
             deleteExercise(exercise.id);
             setSelectedExercise(null);
+            setReturnToExerciseId(null);
           }}
         />
         <Navigation
@@ -52,6 +71,7 @@ function App() {
           onTabChange={(tab) => {
             setActiveTab(tab);
             setSelectedExercise(null);
+            setReturnToExerciseId(null);
           }}
           hasActiveWorkout={hasActiveWorkout}
         />
@@ -81,11 +101,17 @@ function App() {
       {activeTab === 'workout' && (
         <Workout
           data={data}
+          initialExerciseId={returnToExerciseId}
+          onClearInitialExercise={() => setReturnToExerciseId(null)}
           onStartWorkout={startWorkoutSession}
           onEndWorkout={endWorkoutSession}
           onDeleteWorkoutSession={deleteWorkoutSession}
           onAddSet={addSetToExercise}
+          onDeleteSet={deleteSet}
+          onUpdateSet={updateSet}
           onAddExerciseToSession={addExerciseToWorkoutSession}
+          onUpdateNote={updateExerciseSessionNote}
+          onViewExercise={handleViewExerciseFromWorkout}
         />
       )}
 

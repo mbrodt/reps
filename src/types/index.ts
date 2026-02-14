@@ -7,6 +7,7 @@ export type ExerciseSession = {
   id: string;
   date: string;
   sets: Set[];
+  note?: string;
 };
 
 export type Exercise = {

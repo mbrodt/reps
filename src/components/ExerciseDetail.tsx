@@ -1,16 +1,19 @@
 import { useMemo } from 'react';
 import { ArrowLeft, Trash2, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader } from './ui/Card';
-import type { Exercise } from '../types';
+import { MuscleGroupBadge } from './ui/MuscleGroupBadge';
+import type { Exercise, WorkoutSession } from '../types';
 import { formatDate, getExerciseMaxWeight } from '../utils/stats';
 
 type ExerciseDetailProps = {
   exercise: Exercise;
+  workoutSessions: WorkoutSession[];
+  allExercises: Exercise[];
   onBack: () => void;
   onDelete: () => void;
 };
 
-export function ExerciseDetail({ exercise, onBack, onDelete }: ExerciseDetailProps) {
+export function ExerciseDetail({ exercise, workoutSessions, allExercises, onBack, onDelete }: ExerciseDetailProps) {
   const sortedSessions = useMemo(() => {
     return [...exercise.sessions].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -136,9 +139,18 @@ export function ExerciseDetail({ exercise, onBack, onDelete }: ExerciseDetailPro
         {sortedSessions.map(session => (
           <Card key={session.id}>
             <CardContent>
-              <p className="font-medium text-sm text-gray-500 mb-2">
-                {formatDate(session.date)}
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <p className="font-medium text-sm text-gray-500">
+                  {formatDate(session.date)}
+                </p>
+                <MuscleGroupBadge
+                  exerciseId={exercise.id}
+                  category={exercise.category}
+                  sessionDate={session.date}
+                  workoutSessions={workoutSessions}
+                  allExercises={allExercises}
+                />
+              </div>
               <div className="space-y-1">
                 {session.sets.map((set, idx) => (
                   <div
@@ -147,11 +159,14 @@ export function ExerciseDetail({ exercise, onBack, onDelete }: ExerciseDetailPro
                   >
                     <span className="text-gray-500">Set {idx + 1}</span>
                     <span className="font-medium">
-                      {set.reps} reps × {set.weight} kg
+                      {set.reps} reps x {set.weight} kg
                     </span>
                   </div>
                 ))}
               </div>
+              {session.note && (
+                <p className="text-xs text-gray-400 mt-2 italic">{session.note}</p>
+              )}
             </CardContent>
           </Card>
         ))}

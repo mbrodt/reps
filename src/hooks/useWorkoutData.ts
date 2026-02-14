@@ -93,6 +93,41 @@ export function useWorkoutData() {
     }));
   }, []);
 
+  const updateSet = useCallback((exerciseId: string, sessionId: string, setIndex: number, updatedSet: Set) => {
+    setData(prev => ({
+      ...prev,
+      exercises: prev.exercises.map(exercise => {
+        if (exercise.id !== exerciseId) return exercise;
+        return {
+          ...exercise,
+          sessions: exercise.sessions.map(session => {
+            if (session.id !== sessionId) return session;
+            const newSets = [...session.sets];
+            newSets[setIndex] = updatedSet;
+            return { ...session, sets: newSets };
+          }),
+        };
+      }),
+    }));
+  }, []);
+
+  const updateExerciseSessionNote = useCallback((exerciseId: string, sessionDate: string, note: string) => {
+    const datePart = sessionDate.split('T')[0];
+    setData(prev => ({
+      ...prev,
+      exercises: prev.exercises.map(exercise => {
+        if (exercise.id !== exerciseId) return exercise;
+        return {
+          ...exercise,
+          sessions: exercise.sessions.map(session => {
+            if (session.date.split('T')[0] !== datePart) return session;
+            return { ...session, note: note || undefined };
+          }),
+        };
+      }),
+    }));
+  }, []);
+
   const startWorkoutSession = useCallback(() => {
     const newSession: WorkoutSession = {
       id: generateId(),
@@ -201,6 +236,8 @@ export function useWorkoutData() {
     deleteExercise,
     addSetToExercise,
     deleteSet,
+    updateSet,
+    updateExerciseSessionNote,
     startWorkoutSession,
     endWorkoutSession,
     deleteWorkoutSession,
