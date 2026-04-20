@@ -15,7 +15,7 @@ type WorkoutProps = {
   onStartWorkout: () => WorkoutSession;
   onEndWorkout: (sessionId: string) => void;
   onDeleteWorkoutSession: (sessionId: string) => void;
-  onAddSet: (exerciseId: string, set: Set) => void;
+  onAddSet: (exerciseId: string, set: Set, date?: Date) => void;
   onDeleteSet: (exerciseId: string, sessionId: string, setIndex: number) => void;
   onUpdateSet: (exerciseId: string, sessionId: string, setIndex: number, set: Set) => void;
   onAddExerciseToSession: (sessionId: string, exerciseId: string) => void;
@@ -293,6 +293,7 @@ export function Workout({
         onBack={() => setSelectedPastWorkoutId(null)}
         onDeleteSet={onDeleteSet}
         onUpdateSet={onUpdateSet}
+        onAddSet={onAddSet}
         onDelete={() => handleDeleteWorkoutSession(selectedPastWorkout.id)}
         onUpdateWorkoutSession={onUpdateWorkoutSession}
       />

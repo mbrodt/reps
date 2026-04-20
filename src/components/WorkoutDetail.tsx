@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Trash2, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Trash2, Pencil, Check, X, Plus } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { MuscleGroupBadge } from './ui/MuscleGroupBadge';
@@ -19,6 +19,7 @@ type WorkoutDetailProps = {
   onBack: () => void;
   onDeleteSet: (exerciseId: string, sessionId: string, setIndex: number) => void;
   onUpdateSet: (exerciseId: string, sessionId: string, setIndex: number, set: Set) => void;
+  onAddSet: (exerciseId: string, set: Set, date: Date) => void;
   onDelete: () => void;
   onUpdateWorkoutSession?: (sessionId: string, updates: { startTime?: string; endTime?: string }) => void;
 };
@@ -42,6 +43,7 @@ export function WorkoutDetail({
   onBack,
   onDeleteSet,
   onUpdateSet,
+  onAddSet,
   onDelete,
   onUpdateWorkoutSession,
 }: WorkoutDetailProps) {
@@ -49,6 +51,9 @@ export function WorkoutDetail({
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const [editStart, setEditStart] = useState('');
   const [editEnd, setEditEnd] = useState('');
+  const [addingSetForExerciseId, setAddingSetForExerciseId] = useState<string | null>(null);
+  const [newReps, setNewReps] = useState(10);
+  const [newWeight, setNewWeight] = useState('0');
 
   const handleOpenEditMeta = () => {
     setEditStart(toDatetimeLocal(workoutSession.startTime));
@@ -117,6 +122,20 @@ export function WorkoutDetail({
     if (confirm('Delete this set?')) {
       onDeleteSet(exerciseId, sessionId, setIndex);
     }
+  };
+
+  const handleOpenAddSet = (exercise: Exercise, session: Exercise['sessions'][0]) => {
+    const lastSet = session.sets[session.sets.length - 1];
+    setNewReps(lastSet.reps);
+    setNewWeight(formatWeight(lastSet.weight));
+    setAddingSetForExerciseId(exercise.id);
+  };
+
+  const handleSaveNewSet = (exerciseId: string) => {
+    const weightNum = parseFloat(newWeight.replace(',', '.'));
+    if (isNaN(weightNum) || weightNum < 0 || newReps < 1) return;
+    onAddSet(exerciseId, { reps: newReps, weight: weightNum }, new Date(workoutSession.startTime));
+    setAddingSetForExerciseId(null);
   };
 
   return (
@@ -265,6 +284,48 @@ export function WorkoutDetail({
                   );
                 })}
               </div>
+              {/* Add set */}
+              {addingSetForExerciseId === exercise.id ? (
+                <div className="flex items-center gap-2 py-1 mt-1">
+                  <span className="text-gray-500 text-sm w-12">Set {session.sets.length + 1}</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={newReps}
+                    onChange={(e) => setNewReps(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-14 text-center text-sm font-medium border border-gray-300 rounded px-1 py-1 focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                  <span className="text-xs text-gray-400">reps x</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={newWeight}
+                    onChange={(e) => setNewWeight(e.target.value)}
+                    className="w-14 text-center text-sm font-medium border border-gray-300 rounded px-1 py-1 focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                  <span className="text-xs text-gray-400">kg</span>
+                  <button
+                    onClick={() => handleSaveNewSet(exercise.id)}
+                    className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button
+                    onClick={() => setAddingSetForExerciseId(null)}
+                    className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleOpenAddSet(exercise, session)}
+                  className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <Plus size={13} />
+                  Add set
+                </button>
+              )}
               {/* Note section */}
               {session.note && (
                 <p className="text-xs text-gray-400 mt-2 italic">{session.note}</p>
