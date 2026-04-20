@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { ArrowLeft, Trash2, Pencil, Check, X } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
+import { Button } from './ui/Button';
 import { MuscleGroupBadge } from './ui/MuscleGroupBadge';
 import type { WorkoutSession, Exercise, Set } from '../types';
 import { formatDate } from '../utils/stats';
+
+function toDatetimeLocal(isoString: string): string {
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 type WorkoutDetailProps = {
   workoutSession: WorkoutSession;
@@ -13,6 +20,7 @@ type WorkoutDetailProps = {
   onDeleteSet: (exerciseId: string, sessionId: string, setIndex: number) => void;
   onUpdateSet: (exerciseId: string, sessionId: string, setIndex: number, set: Set) => void;
   onDelete: () => void;
+  onUpdateWorkoutSession?: (sessionId: string, updates: { startTime?: string; endTime?: string }) => void;
 };
 
 function formatWeight(value: number): string {
@@ -35,8 +43,27 @@ export function WorkoutDetail({
   onDeleteSet,
   onUpdateSet,
   onDelete,
+  onUpdateWorkoutSession,
 }: WorkoutDetailProps) {
   const [editingSet, setEditingSet] = useState<EditingSet | null>(null);
+  const [isEditingMeta, setIsEditingMeta] = useState(false);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
+
+  const handleOpenEditMeta = () => {
+    setEditStart(toDatetimeLocal(workoutSession.startTime));
+    setEditEnd(workoutSession.endTime ? toDatetimeLocal(workoutSession.endTime) : '');
+    setIsEditingMeta(true);
+  };
+
+  const handleSaveEditMeta = () => {
+    if (!editStart) return;
+    onUpdateWorkoutSession?.(workoutSession.id, {
+      startTime: new Date(editStart).toISOString(),
+      ...(editEnd ? { endTime: new Date(editEnd).toISOString() } : {}),
+    });
+    setIsEditingMeta(false);
+  };
 
   const sessionDateStr = workoutSession.startTime.split('T')[0];
 
@@ -110,13 +137,51 @@ export function WorkoutDetail({
             {exercisesWithSessions.length} exercise{exercisesWithSessions.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={onDelete}
-          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <Trash2 size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleOpenEditMeta}
+            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Pencil size={20} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 size={20} />
+          </button>
+        </div>
       </div>
+
+      {/* Edit date/time */}
+      {isEditingMeta && (
+        <Card className="mb-4">
+          <CardContent className="space-y-3">
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Start</label>
+              <input
+                type="datetime-local"
+                value={editStart}
+                onChange={(e) => setEditStart(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide block mb-1">End</label>
+              <input
+                type="datetime-local"
+                value={editEnd}
+                onChange={(e) => setEditEnd(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveEditMeta} className="flex-1">Save</Button>
+              <Button variant="secondary" onClick={() => setIsEditingMeta(false)} className="flex-1">Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Exercises */}
       <div className="space-y-4">

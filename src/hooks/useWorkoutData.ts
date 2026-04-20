@@ -221,6 +221,40 @@ export function useWorkoutData() {
     return newSession;
   }, []);
 
+  const updateWorkoutSession = useCallback((sessionId: string, updates: { startTime?: string; endTime?: string }) => {
+    setData(prev => {
+      const session = prev.workoutSessions.find(s => s.id === sessionId);
+      if (!session) return prev;
+
+      const oldDatePart = session.startTime.split('T')[0];
+      const newStartTime = updates.startTime ?? session.startTime;
+      const newDatePart = newStartTime.split('T')[0];
+      const dateChanged = oldDatePart !== newDatePart;
+
+      const updatedWorkoutSessions = prev.workoutSessions.map(s =>
+        s.id === sessionId ? { ...s, ...updates } : s
+      );
+
+      if (!dateChanged || session.exerciseIds.length === 0) {
+        return { ...prev, workoutSessions: updatedWorkoutSessions };
+      }
+
+      const updatedExercises = prev.exercises.map(exercise => {
+        if (!session.exerciseIds.includes(exercise.id)) return exercise;
+        return {
+          ...exercise,
+          sessions: exercise.sessions.map(es => {
+            if (es.date.split('T')[0] !== oldDatePart) return es;
+            const timePart = es.date.split('T')[1];
+            return { ...es, date: `${newDatePart}T${timePart}` };
+          }),
+        };
+      });
+
+      return { ...prev, exercises: updatedExercises, workoutSessions: updatedWorkoutSessions };
+    });
+  }, []);
+
   const replaceData = useCallback((newData: WorkoutData) => {
     setData(newData);
   }, []);
@@ -243,6 +277,7 @@ export function useWorkoutData() {
     deleteWorkoutSession,
     addExerciseToWorkoutSession,
     logDwarfWorkout,
+    updateWorkoutSession,
     replaceData,
     deleteSessionsFromDate,
   };

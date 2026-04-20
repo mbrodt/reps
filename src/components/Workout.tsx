@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Square, Plus, ChevronRight, ChevronDown, Trash2, Clock, Users } from 'lucide-react';
+import { Play, Square, Plus, ChevronRight, ChevronDown, Trash2, Clock, Users, Pencil, Check, X } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import type { WorkoutData, WorkoutSession, Exercise, Set } from '../types';
@@ -20,8 +20,15 @@ type WorkoutProps = {
   onUpdateSet: (exerciseId: string, sessionId: string, setIndex: number, set: Set) => void;
   onAddExerciseToSession: (sessionId: string, exerciseId: string) => void;
   onUpdateNote: (exerciseId: string, sessionDate: string, note: string) => void;
+  onUpdateWorkoutSession: (sessionId: string, updates: { startTime?: string; endTime?: string }) => void;
   onViewExercise?: (exercise: Exercise) => void;
 };
+
+function toDatetimeLocal(isoString: string): string {
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function Workout({
   data,
@@ -35,11 +42,15 @@ export function Workout({
   onUpdateSet,
   onAddExerciseToSession,
   onUpdateNote,
+  onUpdateWorkoutSession,
   onViewExercise,
 }: WorkoutProps) {
   const [_selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [selectedPastWorkoutId, setSelectedPastWorkoutId] = useState<string | null>(null);
   const [isPastWorkoutsOpen, setIsPastWorkoutsOpen] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
 
   // Use initialExerciseId if provided (returning from ExerciseDetail), otherwise local state
   const selectedExerciseId = initialExerciseId ?? _selectedExerciseId;
@@ -84,6 +95,21 @@ export function Workout({
     }
   };
 
+  const handleOpenEditSession = (session: WorkoutSession) => {
+    setEditStart(toDatetimeLocal(session.startTime));
+    setEditEnd(session.endTime ? toDatetimeLocal(session.endTime) : '');
+    setEditingSessionId(session.id);
+  };
+
+  const handleSaveEditSession = () => {
+    if (!editingSessionId || !editStart) return;
+    onUpdateWorkoutSession(editingSessionId, {
+      startTime: new Date(editStart).toISOString(),
+      ...(editEnd ? { endTime: new Date(editEnd).toISOString() } : {}),
+    });
+    setEditingSessionId(null);
+  };
+
   // Get past workout sessions (completed ones, sorted by most recent)
   const pastSessions = data.workoutSessions
     .filter(s => s.endTime)
@@ -106,29 +132,75 @@ export function Workout({
 
     // Dwarf workout - show simplified view
     if (session.isDwarfWorkout) {
+      const isEditing = editingSessionId === session.id;
       return (
         <Card key={session.id}>
           <CardContent className="py-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Users size={16} className="text-purple-500" />
-                  <p className="font-medium">Dwarf Workout</p>
+            {isEditing ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Start</label>
+                  <input
+                    type="datetime-local"
+                    value={editStart}
+                    onChange={(e) => setEditStart(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  />
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                  <Clock size={14} />
-                  <span>{formatDuration(session.startTime, session.endTime!)}</span>
-                  <span className="text-gray-300">•</span>
-                  <span>{formatDate(session.startTime)}</span>
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-wide block mb-1">End</label>
+                  <input
+                    type="datetime-local"
+                    value={editEnd}
+                    onChange={(e) => setEditEnd(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveEditSession}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-black text-white rounded-lg py-2 text-sm font-medium"
+                  >
+                    <Check size={15} /> Save
+                  </button>
+                  <button
+                    onClick={() => setEditingSessionId(null)}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-gray-100 text-black rounded-lg py-2 text-sm font-medium border border-gray-200"
+                  >
+                    <X size={15} /> Cancel
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDeleteWorkoutSession(session.id); }}
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
+            ) : (
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-purple-500" />
+                    <p className="font-medium">Dwarf Workout</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                    <Clock size={14} />
+                    <span>{formatDuration(session.startTime, session.endTime!)}</span>
+                    <span className="text-gray-300">•</span>
+                    <span>{formatDate(session.startTime)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleOpenEditSession(session); }}
+                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteWorkoutSession(session.id); }}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       );
@@ -222,6 +294,7 @@ export function Workout({
         onDeleteSet={onDeleteSet}
         onUpdateSet={onUpdateSet}
         onDelete={() => handleDeleteWorkoutSession(selectedPastWorkout.id)}
+        onUpdateWorkoutSession={onUpdateWorkoutSession}
       />
     );
   }

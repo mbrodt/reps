@@ -37,11 +37,8 @@ export function getTotalTimeMinutes(data: WorkoutData): number {
 }
 
 export function getWorkoutsThisWeek(data: WorkoutData): number {
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
-  
+  const startOfWeek = getWeekStart(new Date());
+
   const dates = getUniqueWorkoutDates(data);
   return dates.filter(dateStr => {
     const date = new Date(dateStr);
@@ -210,7 +207,8 @@ export function getMuscleGroupOrder(
   if (workoutSession) {
     const sameCategory = workoutSession.exerciseIds.filter(id => {
       const ex = allExercises.find(e => e.id === id);
-      return ex && ex.category === category;
+      return ex && ex.category === category &&
+        ex.sessions.some(s => s.date.split('T')[0] === datePart && s.sets.length > 0);
     });
     const index = sameCategory.indexOf(exerciseId);
     if (index >= 0) return index + 1;

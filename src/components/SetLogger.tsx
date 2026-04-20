@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Minus, Check, Copy, StickyNote, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Check, StickyNote, BarChart3 } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { MuscleGroupBadge } from './ui/MuscleGroupBadge';
@@ -81,20 +81,6 @@ export function SetLogger({ exercise, onBack, onAddSet, onUpdateNote, onViewExer
     // Clean up display on blur
     setWeightDisplay(formatWeight(weight));
   };
-
-  const handleRepeatLastSet = () => {
-    if (todaySession && todaySession.sets.length > 0) {
-      const lastSet = todaySession.sets[todaySession.sets.length - 1];
-      onAddSet({ reps: lastSet.reps, weight: lastSet.weight });
-    } else if (previousSessions.length > 0 && previousSessions[0].sets.length > 0) {
-      const lastSet = previousSessions[0].sets[0];
-      onAddSet({ reps: lastSet.reps, weight: lastSet.weight });
-    }
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1000);
-  };
-
-  const hasRepeatableSet = !!(todaySession?.sets.length || previousSessions[0]?.sets.length);
 
   return (
     <div className="p-4 pb-24">
@@ -190,27 +176,15 @@ export function SetLogger({ exercise, onBack, onAddSet, onUpdateNote, onViewExer
             </div>
           </div>
 
-          {/* Log + Repeat Buttons */}
-          <div className="flex gap-2 mt-2">
-            {hasRepeatableSet && (
-              <Button
-                variant="secondary"
-                size="lg"
-                className="flex-shrink-0"
-                onClick={handleRepeatLastSet}
-              >
-                <Copy size={18} />
-              </Button>
-            )}
-            <Button 
-              className="flex-1" 
-              size="lg" 
-              onClick={handleAddSet}
-            >
-              {justAdded ? <Check size={20} /> : <Plus size={20} />}
-              {justAdded ? 'Added!' : 'Log Set'}
-            </Button>
-          </div>
+          {/* Log Set Button */}
+          <Button
+            className="w-full mt-2"
+            size="lg"
+            onClick={handleAddSet}
+          >
+            {justAdded ? <Check size={20} /> : <Plus size={20} />}
+            {justAdded ? 'Added!' : 'Log Set'}
+          </Button>
         </CardContent>
       </Card>
 

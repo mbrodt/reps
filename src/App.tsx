@@ -26,6 +26,7 @@ function App() {
     deleteWorkoutSession,
     addExerciseToWorkoutSession,
     logDwarfWorkout,
+    updateWorkoutSession,
     replaceData,
     deleteSessionsFromDate,
   } = useWorkoutData();
@@ -111,6 +112,7 @@ function App() {
           onUpdateSet={updateSet}
           onAddExerciseToSession={addExerciseToWorkoutSession}
           onUpdateNote={updateExerciseSessionNote}
+          onUpdateWorkoutSession={updateWorkoutSession}
           onViewExercise={handleViewExerciseFromWorkout}
         />
       )}
